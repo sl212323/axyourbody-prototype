@@ -104,6 +104,10 @@ h1,h2,.brand{letter-spacing:var(--head-track,0)}
 .set[aria-pressed=true]{background:var(--done-soft);border-color:var(--done);color:var(--done);font-weight:700}
 .set[aria-pressed=true]::before{content:"✓ "}
 .timer{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--soft);border-radius:var(--r-md);padding:12px 14px;margin:10px 0}
+.timer[hidden]{display:none}
+.timer .ctl{display:flex;gap:6px}
+.rest-len{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.rest-len .chip{padding:6px 12px;min-height:36px;font-size:14px}
 .timer b{font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
 .video{display:flex;align-items:center;gap:14px;border:1px solid var(--hairline);border-radius:var(--r-md);padding:10px;cursor:pointer;background:var(--canvas);width:100%;font-family:inherit;font-size:15px;text-align:left;color:var(--ink-2)}
 .video .thumb{width:96px;height:64px;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--primary-soft),var(--soft));display:flex;align-items:center;justify-content:center;color:var(--primary);position:relative}
@@ -493,7 +497,7 @@ const crumbs={move:()=>`오늘 할 운동 > ${step+1}/${plan().moves.length}번�
 const menuOf={home:'home',move:'home',save:'home',weight:'weight',goal:'goal',log:'goal',days:'goal',busy:'busy',me:null};
 let cur='home';
 function go(id){
-  cur=id; clearInterval(restT); clearInterval(workT);
+  cur=id; clearInterval(restT); clearInterval(workT); workT=null; restT=null; restRun=false; restLeft=restLen;
   document.querySelectorAll('section.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
   document.querySelectorAll('nav.menu button').forEach(b=>{ if(b.dataset.go===menuOf[id]) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
   document.getElementById('path').textContent = crumbs[id] ? crumbs[id]() : '';
@@ -567,9 +571,10 @@ function renderMove(){
   if(sets){
     const k=step; setsDone[k]=setsDone[k]||[];
     tr.innerHTML=`<div class="sets">${Array.from({length:+sets},(_,i)=>`<button class="set" aria-pressed="${setsDone[k].includes(i)}" onclick="toggleSet(${i})">${i+1}세트<br><span class="muted" style="font-weight:400">${x[2].split(' ×')[0]}</span></button>`).join('')}</div>
-      <div class="timer" id="rest" hidden><span>${icon('clock')} 쉬는 시간</span><b id="rest-t">1:00</b><button class="link" onclick="clearInterval(restT);document.getElementById('rest').hidden=true">건너뛰기</button></div>`;
+      <div class="timer" id="rest"><span>${icon('clock')} 쉬는 시간</span><b id="rest-t">${fmt(restLeft)}</b><span class="ctl"><button class="btn small" id="rest-b" onclick="restToggle()">${restRun?'잠깐 멈춤':restLeft<restLen?'이어서':'시작'}</button><button class="btn ghost small" onclick="restReset()">다시</button></span></div>
+      <div class="rest-len" id="rest-len">${[30,60,90,120].map(v=>`<button class="chip" data-s="${v}" aria-pressed="${v===restLen}" onclick="restSet(${v})">${v<60?v+'초':v%60?Math.floor(v/60)+'분 '+(v%60)+'초':(v/60)+'분'}</button>`).join('')}</div>`;
   } else {
-    const mins=parseInt(x[2]); tr.innerHTML=`<div class="timer"><span>${icon('clock')} ${x[2]} 타이머</span><b id="work-t">${fmt(mins*60)}</b><button class="btn small" id="work-b" onclick="toggleWork(${mins})">시작</button></div>`;
+    const mins=parseInt(x[2]); tr.innerHTML=`<div class="timer"><span>${icon('clock')} ${x[2]} 타이머</span><b id="work-t">${fmt(mins*60)}</b><span class="ctl"><button class="btn small" id="work-b" onclick="toggleWork(${mins})">시작</button><button class="btn ghost small" onclick="workReset(${mins})">다시</button></span></div>`;
   }
   document.getElementById('next-btn').innerHTML= step===m.length-1 ? `${icon('check')}다 했어요, 저장하기` : `다 했어요, 다음 동작<svg class="ic flip"><use href="#i-arrow"/></svg>`;
   document.getElementById('gear-find').open=false; findGear('');
@@ -578,9 +583,22 @@ function toggleSet(i){
   const a=setsDone[step]; const on=a.includes(i);
   setsDone[step]=on?a.filter(v=>v!==i):[...a,i]; renderMove();
   const total=document.querySelectorAll('.set').length;
-  if(!on && setsDone[step].length<total){ let s=60; document.getElementById('rest').hidden=false; clearInterval(restT); restT=setInterval(()=>{s--; const e=document.getElementById('rest-t'); if(!e||s<0){clearInterval(restT);return} e.textContent=fmt(s); if(s===0){toast('쉬는 시간이 끝났어요. 다음 세트!')}},1000); }
+  if(!on && setsDone[step].length<total){ restReset(); restToggle(); }
   if(!on && setsDone[step].length===total) toast('이 동작을 다 했어요. 다음 동작으로 넘어가세요.');
 }
+let restLen=60, restLeft=60, restRun=false;
+function restTick(){
+  restLeft--; const e=document.getElementById('rest-t'); if(e) e.textContent=fmt(Math.max(restLeft,0));
+  if(restLeft<=0){ clearInterval(restT); restT=null; restRun=false; restLeft=restLen; const b=document.getElementById('rest-b'); if(b) b.textContent='시작'; if(e) e.textContent=fmt(restLen); toast('쉬는 시간이 끝났어요. 다음 세트!'); }
+}
+function restToggle(){
+  const b=document.getElementById('rest-b');
+  if(restRun){ clearInterval(restT); restT=null; restRun=false; if(b) b.textContent='이어서'; return; }
+  restRun=true; if(b) b.textContent='잠깐 멈춤'; clearInterval(restT); restT=setInterval(restTick,1000);
+}
+function restReset(){ clearInterval(restT); restT=null; restRun=false; restLeft=restLen; const e=document.getElementById('rest-t'), b=document.getElementById('rest-b'); if(e) e.textContent=fmt(restLen); if(b) b.textContent='시작'; }
+function restSet(v){ restLen=v; restReset(); document.querySelectorAll('#rest-len .chip').forEach(c=>c.setAttribute('aria-pressed',+c.dataset.s===v)); }
+function workReset(mins){ clearInterval(workT); workT=null; workLeft=null; const e=document.getElementById('work-t'), b=document.getElementById('work-b'); if(e) e.textContent=fmt(mins*60); if(b) b.textContent='시작'; }
 let workLeft=null;
 function toggleWork(mins){
   const b=document.getElementById('work-b');
@@ -685,7 +703,7 @@ const EXACT={
  '월':['Mon','إثن'],'화':['Tue','ثلا'],'수':['Wed','أرب'],'목':['Thu','خمي'],'금':['Fri','جمع'],'토':['Sat','سبت'],'일':['Sun','أحد'],
  '집':['Home','المنزل'],'보':[' steps',' خطوة'],'분':['min','دقيقة'],'쉼':['Rest','راحة'],'전체':['All','الكل'],'저장':['Save','حفظ'],'시작':['Start','ابدأ'],'동작':['Moves','الحركات'],
  '날짜':['Date','التاريخ'],'종류':['Type','النوع'],'체중':['Weight','الوزن'],'요일':['Days','الأيام'],'오류':['Error','خطأ'],'로딩':['Loading','تحميل'],'정상':['Normal','عادي'],
- '이상치':['Outlier','قيمة شاذة'],'테마':['Theme','السمة'],'조용한 노트':['Quiet notebook','دفتر هادئ'],'산뜻한 초록':['Fresh green','أخضر منعش'],'따뜻한 웰니스':['Warm wellness','عافية دافئة'],'빈 상태':['Empty','فارغ'],'보기':['View','العرض'],'근거':['Evidence','الدليل'],'한계':['Limits','الحدود'],'어디서 했나요':['Where','أين'],
+ '이상치':['Outlier','قيمة شاذة'],'다시':['Reset','إعادة'],'테마':['Theme','السمة'],'조용한 노트':['Quiet notebook','دفتر هادئ'],'산뜻한 초록':['Fresh green','أخضر منعش'],'따뜻한 웰니스':['Warm wellness','عافية دافئة'],'빈 상태':['Empty','فارغ'],'보기':['View','العرض'],'근거':['Evidence','الدليل'],'한계':['Limits','الحدود'],'어디서 했나요':['Where','أين'],
 };
 const PHRASES=[
  ['오늘은 가볍게 · 다른 날로 옮길래요','Go light today · Move to another day','خفّف اليوم · انقله إلى يوم آخر'],
@@ -743,6 +761,7 @@ const PHRASES=[
  ['하나로 합치면 이번 주 횟수는 그대로예요.','Merging keeps this week\'s count the same.','الدمج يُبقي عدد هذا الأسبوع كما هو.'],['하나로 합칠게요','Merge them','ادمجهما'],['따로 저장','Save separately','احفظ بشكل منفصل'],
  ['사용법 영상은 예시예요. 영상이 늦으면 아래 글 설명으로 먼저 시작하면 돼요.','The how-to video is a sample. If it loads slowly, start with the written guide.','فيديو الشرح مثال. إن تأخر، ابدأ بالدليل المكتوب.'],
  ['이 동작을 다 했어요. 다음 동작으로 넘어가세요.','Move complete. Go to the next one.','انتهيت من هذه الحركة. انتقل إلى التالية.'],
+ ['다시 시도','Try again','حاول مرة أخرى'],
  ['쉬는 시간이 끝났어요. 다음 세트!','Rest over. Next set!','انتهت الاستراحة. المجموعة التالية!'],['시간을 다 채웠어요!','Time\'s up, well done!','انتهى الوقت، أحسنت!'],
  ['저장했어요. 이번 주 운동이 하나 늘었어요.','Saved. One more workout this week.','تم الحفظ. تمرين إضافي هذا الأسبوع.'],['오늘 기록 하나로 합쳤어요.','Merged into today\'s record.','دُمج في سجل اليوم.'],
  ['운동할 날을 저장했어요.','Workout days saved.','حُفظت أيام التمرين.'],
@@ -794,6 +813,7 @@ const REGEX=[
  [/오늘 할 동작 (\d+)개/g,'Today\'s moves ($1)','حركات اليوم ($1)'],
  [/(\d+)회 × (\d+)세트/g,'$1 reps × $2 sets','$1 تكرار × $2 مجموعات'],
  [/(\d+)세트/g,'Set $1','مجموعة $1'],[/(\d+)회$/g,'$1 reps','$1 تكرار'],
+ [/(\d+)초/g,'$1s','$1 ثانية'],
  [/(\d+)~(\d+)분/g,'$1–$2 min','$1–$2 دقيقة'],[/(\d+)분 타이머/g,'$1-min timer','مؤقّت $1 دقيقة'],[/(\d+)분/g,'$1 min','$1 دقيقة'],
  [/(\d+\/\d+) \((월|화|수|목|금|토|일)\)/g,l=>(m,d,w)=>`${D(l,w)} ${d}`],
  [/(월|화|수|목|금|토|일)로 옮김/g,l=>(m,w)=>l==='en'?`Moved to ${D(l,w)}`:`نُقل إلى ${D(l,w)}`],
