@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AX YOUR BODY · 첫 프로토타입 (warm-wellness)</title>
+<!-- 글꼴: 인터넷이 연결돼 있으면 Pretendard · Gowun Dodum을 불러오고, 아니면 기기 글꼴(맑은 고딕 등)로 보입니다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Gowun+Dodum&family=Noto+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+/* THEME:START — DESIGN-warm-wellness.md (Oura 기반: 따뜻한 크림 바탕, 흙빛·세이지, 한 가지 파란 버튼, 부드러운 제목 글꼴. 추가 규칙: 빨강 대신 황토색, 제목 크기 축소) */
+:root{
+  --primary:#2a72de; --primary-active:#1f5bb5; --on-primary:#fff; --primary-soft:#e9eff9;
+  --page:#efe7da; --canvas:#ffffff; --soft:#f7f1e8; --ink:#1c1b1a; --ink-2:#4a4741; --muted:#6e6b66; --faint:#a8a5a0;
+  --hairline:#e1dcd3; --done:#5c6f5d; --done-soft:#e6eadb; --accent:#849671; --accent-2:#bc924c; --warn:#8a5a12; --warn-soft:#f5ecd9;
+  --r-sm:8px; --r-md:12px; --r-lg:24px; --r-btn:9999px;
+  --font:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-head:"Gowun Dodum",Pretendard,"Malgun Gothic",sans-serif; --head-weight:400; --head-track:-0.01em;
+}
+/* THEME:END */
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--ink-2)}
+body{font-family:var(--font);font-size:16px;line-height:1.5}
+.ic{width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px}
+.app{max-width:560px;min-height:100vh;margin:0 auto;background:var(--canvas);display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--hairline)}
+header.top{order:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--hairline);position:sticky;top:0;background:var(--canvas);z-index:30}
+.brand{font-family:var(--font-head);font-weight:var(--head-weight);color:var(--ink);font-size:17px;display:flex;align-items:center;gap:8px}
+.brand .logo{width:28px;height:28px;border-radius:8px;background:var(--primary);color:var(--on-primary);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.iconbtn{border:1px solid var(--hairline);background:var(--canvas);border-radius:50%;width:40px;height:40px;cursor:pointer;color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center}
+.langbtn{border:1px solid var(--hairline);background:var(--canvas);border-radius:var(--r-btn);height:40px;padding:0 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink-2)}
+.langwrap{position:relative;display:inline-flex}
+.langmenu{position:absolute;top:46px;right:0;background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-md);padding:6px;display:flex;flex-direction:column;min-width:140px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:60}
+.langmenu[hidden]{display:none}
+.langmenu button{border:0;background:none;text-align:start;padding:10px 12px;border-radius:8px;font:inherit;font-size:15px;cursor:pointer;color:var(--ink-2)}
+.langmenu button[aria-pressed=true]{background:var(--primary-soft);color:var(--primary);font-weight:700}
+html[lang=ar] body{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,var(--font)}
+html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] .big,html[lang=ar] .goal-left,html[lang=ar] .brand{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;letter-spacing:0}
+[dir=rtl] .langmenu{right:auto;left:0}
+[dir=rtl] .flip{transform:scaleX(-1)}
+.ltr{direction:ltr;unicode-bidi:isolate}
+[dir=rtl] .tools{left:auto;right:12px} [dir=rtl] .tools .panel{left:auto;right:0}
+[dir=rtl] .notice .ic,[dir=rtl] .trust .judge .ic{margin-left:0}
+.iconbtn.me{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.path{order:2;font-size:14px;color:var(--muted);padding:12px 20px 0;min-height:12px}
+main{order:3;flex:1;padding:12px 20px 28px}
+nav.menu{order:4;position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--hairline);background:var(--canvas);z-index:6}
+nav.menu button{background:none;border:0;padding:8px 4px 10px;font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;min-height:60px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.menu button .ic{width:22px;height:22px}
+nav.menu button[aria-current=page]{color:var(--ink);font-weight:700}
+nav.menu button[aria-current=page] span{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
+section.screen{display:none} section.screen.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h1{font-family:var(--font-head);font-weight:var(--head-weight);font-size:24px;line-height:1.3;color:var(--ink);margin:4px 0 12px}
+h2{font-family:var(--font-head);font-weight:var(--head-weight);font-size:18px;color:var(--ink);margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+p{margin:6px 0}
+.muted{color:var(--muted);font-size:14px}
+.card{background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:16px;margin:10px 0}
+.soft{background:var(--soft);border-color:transparent}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;border-radius:var(--r-btn);padding:3px 10px;background:var(--primary-soft);color:var(--primary)}
+.badge.ok{background:var(--done-soft);color:var(--done)}
+.badge.note{background:var(--warn-soft);color:var(--warn)}
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--hairline);margin-bottom:14px}
+.tab{background:none;border:0;padding:10px 0;font-size:17px;color:var(--muted);cursor:pointer;font-family:inherit}
+.tab[aria-selected=true]{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:9px;text-decoration-thickness:3px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hairline);background:var(--canvas);border-radius:var(--r-btn);padding:10px 16px;font-size:16px;cursor:pointer;font-family:inherit;color:var(--ink-2);min-height:44px}
+.chip[aria-pressed=true]{border:2px solid var(--primary);color:var(--primary);font-weight:700;background:var(--primary-soft)}
+.places{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.place{border:1px solid var(--hairline);background:var(--canvas);border-radius:var(--r-md);padding:12px 6px;cursor:pointer;font:inherit;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:6px;min-height:76px}
+.place .ic{width:24px;height:24px}
+.place[aria-pressed=true]{border:2px solid var(--primary);color:var(--primary);font-weight:700;background:var(--primary-soft)}
+.hello{display:flex;align-items:center;gap:16px;border-radius:var(--r-lg);padding:16px;background:var(--soft);margin-bottom:14px}
+.hello b{color:var(--ink);font-size:17px}
+ol.moves{list-style:none;padding:0;margin:0}
+ol.moves li{display:flex;align-items:center;gap:12px;border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px 14px;margin:8px 0}
+.tile{width:44px;height:44px;border-radius:var(--r-md);background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.tile .ic{width:24px;height:24px}
+.mv{flex:1} .mv b{display:block;color:var(--ink);font-size:17px} .mv span{font-size:13px;color:var(--muted)}
+.amt{color:var(--primary);font-weight:700;white-space:nowrap}
+.trust{border:1px solid var(--hairline);border-radius:var(--r-md);padding:14px;margin:14px 0;background:var(--canvas)}
+.trust .lbl{display:inline-block;white-space:nowrap;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--hairline);border-radius:6px;padding:0 6px;margin-right:6px}
+.trust .judge{color:var(--ink);font-weight:700;font-size:16px;display:flex;gap:6px;align-items:flex-start}
+.trust ul{margin:6px 0 0 18px;padding:0;font-size:14px}
+.cta{position:sticky;bottom:68px;padding:12px 0 4px;background:linear-gradient(transparent,var(--canvas) 35%);z-index:2}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:var(--r-btn);background:var(--primary);color:var(--on-primary);font-size:17px;font-weight:700;padding:15px;cursor:pointer;font-family:inherit;min-height:52px}
+.btn:active{background:var(--primary-active)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:var(--canvas);color:var(--primary);border:1px solid var(--primary)}
+.btn.small{width:auto;padding:10px 18px;min-height:44px;font-size:15px}
+.link{background:none;border:0;color:var(--primary);font-size:15px;cursor:pointer;font-family:inherit;padding:6px 0;text-decoration:underline;text-underline-offset:3px}
+.big{font-family:var(--font-head);font-size:30px;font-weight:var(--head-weight);color:var(--ink);line-height:1.25;letter-spacing:var(--head-track,0)}
+h1,h2,.brand{letter-spacing:var(--head-track,0)}
+.goal-left{font-family:var(--font-head);font-weight:var(--head-weight);font-size:24px;color:var(--ink);letter-spacing:var(--head-track,0);line-height:1.3;margin:2px 0}
+.goal-sub{font-size:15px;color:var(--muted)}
+.steps{display:flex;gap:8px;align-items:center;margin:4px 0 16px}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--hairline);display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);background:var(--canvas);flex:0 0 auto}
+.dot.done{background:var(--done);border-color:var(--done);color:#fff}
+.dot.now{border-color:var(--primary);color:var(--primary);font-weight:700}
+.bar{flex:1;height:2px;background:var(--hairline)} .bar.done{background:var(--done)}
+.gear{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:var(--r-btn);padding:6px 12px;font-size:15px;color:var(--ink-2)}
+.sets{display:flex;gap:8px;margin:14px 0}
+.set{flex:1;border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px 4px;background:var(--canvas);font:inherit;cursor:pointer;min-height:64px;color:var(--ink-2)}
+.set[aria-pressed=true]{background:var(--done-soft);border-color:var(--done);color:var(--done);font-weight:700}
+.set[aria-pressed=true]::before{content:"✓ "}
+.timer{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--soft);border-radius:var(--r-md);padding:12px 14px;margin:10px 0}
+.timer b{font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
+.video{display:flex;align-items:center;gap:14px;border:1px solid var(--hairline);border-radius:var(--r-md);padding:10px;cursor:pointer;background:var(--canvas);width:100%;font-family:inherit;font-size:15px;text-align:left;color:var(--ink-2)}
+.video .thumb{width:96px;height:64px;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--primary-soft),var(--soft));display:flex;align-items:center;justify-content:center;color:var(--primary);position:relative}
+.video .thumb small{position:absolute;right:6px;bottom:4px;font-size:11px;background:rgba(0,0,0,.6);color:#fff;border-radius:4px;padding:0 4px}
+details{border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px 14px;margin:10px 0}
+summary{cursor:pointer;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+input,select{font:inherit;padding:10px 12px;border:1px solid var(--hairline);border-radius:var(--r-sm);width:100%;min-height:44px;background:var(--canvas);color:var(--ink-2)}
+label.f{display:block;font-weight:600;color:var(--ink);margin:16px 0 6px}
+.unit{display:flex;align-items:center;gap:8px}.unit input{flex:1}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
+.day{border:1px solid var(--hairline);border-radius:var(--r-md);padding:8px 2px;text-align:center;font-size:12px;background:var(--canvas);font-family:inherit;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;min-height:92px}
+.day .d{font-weight:700;font-size:14px;color:var(--ink)}
+.day .sq{width:32px;height:32px;border-radius:9px;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;color:var(--faint)}
+.day.did{background:var(--done-soft);border-color:var(--done);color:var(--done);font-weight:700}
+.day.did .sq{background:var(--done);color:#fff}
+.day.plan{border:2px dashed var(--primary);color:var(--primary)}
+.day.plan .sq{background:var(--primary);color:var(--on-primary)}
+.day.miss{cursor:pointer;border:2px dashed var(--faint)}
+.day.moved .sq{background:var(--soft);color:var(--ink-2)}
+.day.today{outline:2px solid var(--ink);outline-offset:1px}
+button.day{cursor:pointer}
+button.pick{min-height:56px}
+button.pick[aria-pressed=true]{border:2px solid var(--primary);color:var(--primary);background:var(--primary-soft)}
+ul.list{list-style:none;padding:0;margin:0}
+ul.list li{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--hairline);gap:10px}
+ul.list li .l{display:flex;align-items:center;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:440px){.grid3{grid-template-columns:1fr}}
+.grid3 .card{margin:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ring{position:relative;width:92px;height:92px;flex:0 0 auto}
+.ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink)}
+.notice{display:flex;gap:10px;align-items:flex-start;border-radius:var(--r-md);padding:12px 14px;margin:10px 0;background:var(--warn-soft);color:var(--ink-2)}
+.notice .ic{color:var(--warn);margin-top:2px}
+.notice.info{background:var(--primary-soft)} .notice.info .ic{color:var(--primary)}
+.skel{background:linear-gradient(90deg,var(--soft),var(--hairline),var(--soft));background-size:200% 100%;animation:sk 1.2s infinite;border-radius:var(--r-md);height:64px;margin:8px 0}
+@keyframes sk{to{background-position:-200% 0}}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r-btn);font-size:15px;display:none;z-index:40;max-width:90vw}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:50;align-items:flex-end;justify-content:center}
+.sheet{background:var(--canvas);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:560px}
+.sheet .btns{display:flex;gap:8px;margin-top:14px}
+/* 상태 미리 보기: body[data-state] */
+.only-empty,.only-error,.only-loading,.only-outlier{display:none}
+body[data-state=empty] .only-empty, body[data-state=error] .only-error, body[data-state=loading] .only-loading, body[data-state=outlier] .only-outlier{display:block}
+body[data-state=empty] .hide-empty, body[data-state=loading] .hide-loading{display:none}
+/* 보기 도구 */
+.tools{position:fixed;left:12px;bottom:84px;z-index:45}
+.tools > button{border:1px solid var(--hairline);background:var(--canvas);border-radius:var(--r-btn);padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1);color:var(--ink-2)}
+.tools .panel{display:none;position:absolute;bottom:46px;left:0;background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-md);padding:12px;width:290px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.tools.open .panel{display:block}
+.tools .panel .chip{padding:6px 10px;min-height:36px;font-size:14px}
+body.mob .app{max-width:420px}
+/* 데스크톱 보기 */
+body.desk .app{max-width:1120px}
+body.desk nav.menu{order:1;position:sticky;top:69px;bottom:auto;border-top:0;border-bottom:1px solid var(--hairline);display:flex;gap:6px;padding:0 24px}
+body.desk nav.menu button{flex-direction:row;gap:8px;padding:14px 12px;font-size:16px;min-height:auto}
+body.desk nav.menu button .ic{width:20px;height:20px}
+body.desk main{padding:20px 40px 48px} body.desk .path{padding:14px 40px 0}
+body.desk .cta{position:static;background:none;padding:16px 0 0}
+body.desk .big{font-size:40px}
+body.desk .tools{bottom:16px}
+body.desk #home-today{display:grid;grid-template-columns:3fr 2fr;column-gap:40px;align-items:start}
+body.desk #home-today > *{grid-column:1} body.desk #home-today > .side{grid-column:2;grid-row:1 / span 6}
+body.desk #s-goal.on, body.desk #s-weight.on{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;align-items:start}
+body.desk #s-move.on, body.desk #s-save.on, body.desk #s-days.on, body.desk #s-me.on, body.desk #s-busy.on, body.desk #s-log.on{max-width:680px;margin:0 auto}
+/* THEME-OVERRIDES:START */
+.app,header.top,nav.menu{background:#f7f1e8}
+.cta{background:linear-gradient(rgba(247,241,232,0),#f7f1e8 35%)}
+.hello,.soft{background:#efe7da}
+.brand .logo{background:var(--accent);color:#fff}
+.tile{background:#eef0e6;color:var(--done)}
+.place,.chip,.set,.day,.video,ol.moves li,.trust,.card,input,select{background:#fff}
+.place[aria-pressed=true],.chip[aria-pressed=true]{background:var(--primary-soft)}
+.day.did{background:var(--done-soft)} .set[aria-pressed=true]{background:var(--done-soft)}
+/* THEME-OVERRIDES:END */
+</style>
+</head>
+<body data-state="normal">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"/><path d="M10 21l2-6-3-3 1-5 4 3 3 1M8 12l-2 3M12 15l3 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 7h12l-3-3M17 17H5l3 3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9a4 4 0 0 1 6 0M12 9l1 2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></symbol>
+  <symbol id="i-steps" viewBox="0 0 24 24"><path d="M8 3c2 0 3 2 3 5s-1 5-3 5-3-2-3-5 1-5 3-5zM16 9c2 0 3 2 3 5s-1 5-3 5-3-2-3-5 1-5 3-5zM6 15h4M14 21h4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="i-rest" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <span class="brand"><span class="logo">AX</span>AX YOUR BODY</span>
+    <span style="display:flex;gap:8px">
+      <span class="langwrap"><button class="langbtn" id="langbtn" onclick="toggleLangMenu()" aria-label="언어 바꾸기" aria-haspopup="true">🌐 한국어 ▾</button>
+        <span class="langmenu" id="langmenu" hidden><button data-l="ko" aria-pressed="true" onclick="setLang('ko')">한국어</button><button data-l="en" aria-pressed="false" onclick="setLang('en')">English</button><button data-l="ar" aria-pressed="false" onclick="setLang('ar')">العربية</button></span></span>
+      <button class="iconbtn" aria-label="알림" onclick="toast('새 알림이 없어요.')"><svg class="ic"><use href="#i-bell"/></svg></button>
+      <button class="iconbtn me" aria-label="내 정보" onclick="go('me')"><svg class="ic"><use href="#i-user"/></svg></button>
+    </span>
+  </header>
+  <div class="path" id="path"></div>
+
+  <main>
+    <!-- ① 첫 화면 -->
+    <section class="screen" id="s-home">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-today" aria-selected="true" onclick="homeTab('today')">오늘 할 운동</button>
+        <button class="tab" role="tab" id="tab-review" aria-selected="false" onclick="homeTab('review')">건강 상태 리뷰</button>
+      </div>
+
+      <div id="home-today">
+        <div class="hello" id="hello"></div>
+        <h2><svg class="ic"><use href="#i-target"/></svg>어디서 할까요?</h2>
+        <div class="places" id="places"></div>
+        <h2 id="moves-title"></h2>
+        <div class="only-loading"><p class="muted">새 운동을 준비하고 있어요. 그동안 지난번 운동을 먼저 보여 드려요.</p><div class="skel"></div><div class="skel"></div></div>
+        <div class="only-error"><div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>새 운동을 불러오지 못했어요.</b><br>지난번 운동(10/30 러닝머신 걷기 30분)으로 시작할까요?<br><button class="link" onclick="usePrev()">지난번 운동으로 시작</button></div></div></div>
+        <ol class="moves hide-loading" id="moves"></ol>
+        <div class="side">
+          <div class="trust" id="trust"></div>
+          <div class="row" style="gap:8px">
+            <button class="link" onclick="openSheet('light')">오늘은 가볍게 · 다른 날로 옮길래요</button>
+          </div>
+          <div class="cta"><button class="btn" onclick="startWorkout()"><svg class="ic"><use href="#i-play"/></svg>시작</button></div>
+        </div>
+      </div>
+
+      <div id="home-review" hidden>
+        <div class="grid3">
+          <button class="card" onclick="go('goal')">
+            <div class="row"><span class="muted">운동 횟수 흐름</span><svg class="ic" style="color:var(--primary)"><use href="#i-chart"/></svg></div>
+            <svg viewBox="0 0 132 74" width="100%" height="90" aria-label="최근 4주 운동 횟수 3, 0, 3, 2회"><g id="countBars"></g></svg>
+            <b style="color:var(--ink)">최근 4주 3 · 0 · 3 · 2회</b>
+            <p class="muted">이번 주는 지금까지 2회</p>
+          </button>
+          <button class="card" onclick="go('weight')">
+            <div class="row"><span class="muted">아침 빈속 체중 흐름</span><svg class="ic" style="color:var(--primary)"><use href="#i-scale"/></svg></div>
+            <svg viewBox="0 0 132 74" width="100%" height="90" aria-label="아침 빈속 체중 흐름 56.2에서 55.5kg"><polyline id="wLineMini" fill="none" stroke="var(--primary)" stroke-width="2.4"/><g id="wDotsMini"></g></svg>
+            <b style="color:var(--ink)">56.2 → 55.5 kg</b>
+            <p class="muted">4주 동안 -0.7kg</p>
+          </button>
+          <div class="card" style="cursor:default">
+            <div class="row"><span class="muted">일상 걸음</span><svg class="ic" style="color:var(--primary)"><use href="#i-steps"/></svg></div>
+            <div class="big" style="margin:22px 0 8px">3,800<span style="font-size:16px">보</span></div>
+            <b style="color:var(--ink)">10/30 (금)</b>
+            <p class="muted">운동 횟수에는 세지 않아요</p>
+          </div>
+        </div>
+        <div class="trust"><div class="judge"><svg class="ic"><use href="#i-spark"/></svg>이번 달은 운동 횟수와 아침 체중 모두 조금씩 나아지고 있어요.</div>
+          <p class="muted"><span class="lbl">근거</span>workout.csv 주별 운동 3 · 0 · 3 · 2회, body.csv 아침 빈속 기록 7회(10/05~10/26)</p>
+          <p class="muted"><span class="lbl">한계</span>걸음 수는 걷기 운동을 한 날에만 기록이 있어요. 저녁에 잰 체중 2회는 흐름에서 뺐어요.</p></div>
+      </div>
+    </section>
+
+    <!-- ② 동작 카드 -->
+    <section class="screen" id="s-move">
+      <div class="steps" id="steps"></div>
+      <div class="big" id="move-name"></div>
+      <div style="margin:10px 0" class="row"><span class="gear" id="move-gear"></span><span class="amt" style="font-size:20px" id="move-amt"></span></div>
+      <div id="move-track"></div>
+      <div class="only-error"><div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>영상을 불러오지 못했어요.</b> 글로 된 사용법을 볼까요?<br><span class="muted">등을 곧게 펴고, 손잡이를 가슴 쪽으로 천천히 당겼다가 2초 동안 되돌려요. (예시)</span></div></div></div>
+      <button class="video hide-error" onclick="toast('사용법 영상은 예시예요. 영상이 늦으면 아래 글 설명으로 먼저 시작하면 돼요.')">
+        <span class="thumb"><svg class="ic" style="width:28px;height:28px"><use href="#i-play"/></svg><small>0:45</small></span>
+        <span><b style="color:var(--ink)">사용법 영상</b><br><span class="muted">누르면 재생 · 자동 재생 안 함</span></span>
+      </button>
+      <details id="gear-find">
+        <summary><svg class="ic"><use href="#i-search"/></svg>기구가 어디 있나요?</summary>
+        <p class="muted" style="margin-top:8px">기구 이름이나 어디 운동(하체 · 상체 · 전신)으로 찾을 수 있어요.</p>
+        <input placeholder="기구 이름 검색 (예: 레그 프레스)" oninput="findGear(this.value)">
+        <ul class="list" id="gear-list"></ul>
+      </details>
+      <div class="cta"><button class="btn" id="next-btn" onclick="nextMove()"></button></div>
+    </section>
+
+    <!-- ③ 운동 1회 저장 -->
+    <section class="screen" id="s-save">
+      <h1>운동 1회 저장</h1>
+      <div class="notice info"><svg class="ic"><use href="#i-check"/></svg><div>오늘 할 운동에서 넘어온 값을 미리 채웠어요. 확인하고 <b>저장</b>만 누르면 돼요.</div></div>
+      <div class="only-error" id="save-error"><div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>아직 저장하지 못했어요.</b> 연결되면 자동으로 다시 저장할게요. 입력한 내용은 그대로 남아 있어요.<br><button class="link" onclick="toast('다시 시도하는 중이에요… (미리 보기)')">다시 시도</button></div></div></div>
+      <label class="f" for="sv-date">날짜</label><input id="sv-date" value="10/31 (토)" readonly>
+      <label class="f">어디서 했나요?</label><div class="places" id="sv-place"></div>
+      <label class="f" for="sv-moves">동작</label><input id="sv-moves" readonly>
+      <label class="f" for="sv-min">운동한 시간 <span class="muted">(필수)</span></label>
+      <div class="unit"><input id="sv-min" type="number" min="1" inputmode="numeric" oninput="checkSave()"><span>분</span></div>
+      <p class="muted" id="sv-help"></p>
+      <div class="cta"><button class="btn" id="save-btn" onclick="trySave()"><svg class="ic"><use href="#i-check"/></svg>저장</button></div>
+    </section>
+
+    <!-- ④ 이번 주 운동 목표 -->
+    <section class="screen" id="s-goal">
+      <div class="col-a">
+        <div class="card" style="display:flex;gap:18px;align-items:center">
+          <div class="ring" id="ring"></div>
+          <div style="flex:1">
+            <div class="row"><span class="muted">이번 주 운동 목표</span><span id="goal-badge"></span></div>
+            <div class="goal-left" id="goal-count"></div>
+            <div class="goal-sub" id="goal-sub"></div>
+            <p class="muted only-loading">업데이트 중…</p>
+          </div>
+        </div>
+        <div class="only-empty"><div class="notice info"><svg class="ic"><use href="#i-info"/></svg><div><b>이번 주 첫 운동을 기다리고 있어요.</b><br>오늘 할 운동에서 한 번만 시작해 보세요.</div></div></div>
+        <div class="row"><h2><svg class="ic"><use href="#i-cal"/></svg>요일 줄</h2><span class="muted ltr">10/26 ~ 11/01</span></div>
+        <div class="week" id="week"></div>
+        <p class="muted">✓ 한 날 · 점선 할 날 · ⇄ 옮긴 날 · 굵은 테두리 오늘 · 회색 점선을 누르면 다른 날로 옮겨요 <button class="link" onclick="go('days')">운동할 날 바꾸기</button></p>
+        <div class="card soft" id="lite-card" hidden>
+          <b style="color:var(--ink)">바쁜 날이 있는 주예요</b>
+          <p>운동을 놓지 않을 만큼만 해 볼까요?</p>
+          <div class="chips">
+            <button class="chip" onclick="setPlace('home');go('home')"><svg class="ic"><use href="#i-home"/></svg>집에서 10분</button>
+            <button class="chip" onclick="setPlace('out');go('home')"><svg class="ic"><use href="#i-walk"/></svg>퇴근길 걷기</button>
+            <button class="chip" onclick="toast('이번 주는 쉬어도 괜찮아요. 남은 날에 다시 알려 드릴게요.')">이번 주는 쉴게요</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-b">
+        <div class="row"><h2><svg class="ic"><use href="#i-check"/></svg>이번 주 운동 기록</h2><button class="link" onclick="go('log')">전체 보기</button></div>
+        <ul class="list" id="goal-log"></ul>
+        <div class="card soft" style="display:flex;gap:12px;align-items:center"><svg class="ic" style="color:var(--primary)"><use href="#i-steps"/></svg><div>일상 걸음 <b>10/30 3,800보</b><br><span class="muted">운동 횟수에는 세지 않아요</span></div></div>
+        <div class="cta"><button class="btn" onclick="homeTab('today');go('home')"><svg class="ic"><use href="#i-play"/></svg>오늘 할 운동 시작</button></div>
+      </div>
+    </section>
+
+    <!-- ⑤ 운동 기록 목록 -->
+    <section class="screen" id="s-log">
+      <h2 style="margin-top:4px">어디서 했나요</h2>
+      <div class="chips" id="log-filter"></div>
+      <ul class="list" id="log-list"></ul>
+    </section>
+
+    <!-- ⑥ 운동할 날 -->
+    <section class="screen" id="s-days">
+      <h1>운동할 날</h1>
+      <label class="f">주 몇 번</label>
+      <div class="chips" id="times"></div>
+      <label class="f">요일</label>
+      <div class="week" id="day-pick"></div>
+      <div class="notice info"><svg class="ic"><use href="#i-info"/></svg><div>지난주(10/19~10/25)에 운동한 월 · 수 · 일을 미리 골라 뒀어요.</div></div>
+      <div class="cta"><button class="btn" onclick="saveDays()">저장</button></div>
+    </section>
+
+    <!-- ⑦ 체중 -->
+    <section class="screen" id="s-weight">
+      <div class="col-a">
+        <div class="card">
+          <div class="row"><span class="muted">체중 · 10/26 (월)</span><span class="badge">아침 빈속</span></div>
+          <div class="big" style="font-size:44px">55.5<span style="font-size:20px"> kg</span></div>
+          <p style="color:var(--ink)">지난번보다 <b>-1.0kg</b></p>
+          <p class="muted">지난번(10/23)은 전날 회식이 있던 아침이라 높게 나왔어요. 하루 사이 변화는 수분 · 식사 때문인 경우가 많아요.</p>
+        </div>
+        <div class="only-outlier">
+          <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>하루 사이 체중이 크게 바뀌었어요 (10/23 +0.9kg).</b><br>전날 회식이 있었어요. 아침 빈속 흐름은 그대로 내려가고 있어요.</div></div>
+          <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>다른 조건에서 잰 체중이 있어요 (10/30 저녁 56.3kg).</b><br>저녁에 잰 숫자는 아침보다 높게 나와요. 흐름에서는 따로 표시할게요.</div></div>
+        </div>
+        <div class="only-empty"><div class="notice info"><svg class="ic"><use href="#i-info"/></svg><div>아침 빈속 기록이 2번 더 쌓이면 흐름을 보여 드려요.</div></div></div>
+        <h2 class="hide-empty"><svg class="ic"><use href="#i-chart"/></svg>아침 빈속 흐름</h2>
+        <svg class="hide-empty" viewBox="0 0 340 140" width="100%" height="160" role="img" aria-label="아침 빈속 체중 흐름 그래프">
+          <polyline id="wLine" fill="none" stroke="var(--primary)" stroke-width="2.5"/><g id="wDots"></g>
+        </svg>
+        <p class="muted hide-empty">○ 전날 회식 · 흐름에는 아침 빈속 기록만 써요</p>
+      </div>
+      <div class="col-b">
+        <div class="chips" id="w-filter" style="margin-top:14px">
+          <button class="chip" aria-pressed="true" onclick="wFilter('am',this)">잰 때: 아침 빈속</button>
+          <button class="chip" aria-pressed="false" onclick="wFilter('all',this)">전체</button>
+        </div>
+        <ul class="list hide-empty" id="w-list"></ul>
+      </div>
+    </section>
+
+    <!-- ⑧ 바쁜 날 -->
+    <section class="screen" id="s-busy">
+      <h1>바쁜 날</h1>
+      <div class="card">
+        <b style="color:var(--ink);display:flex;align-items:center;gap:8px"><svg class="ic"><use href="#i-plus"/></svg>바쁜 날 표시하기</b>
+        <label class="f" for="busy-date">날짜</label>
+        <select id="busy-date"><option>10/31 (토)</option><option>11/01 (일)</option><option>11/02 (월)</option><option>11/03 (화)</option><option>11/04 (수)</option><option>11/05 (목)</option><option>11/06 (금)</option></select>
+        <label class="f">종류</label>
+        <div class="chips" id="busy-kind">
+          <button class="chip" aria-pressed="true" onclick="pick(this,'busy-kind')">회식</button>
+          <button class="chip" aria-pressed="false" onclick="pick(this,'busy-kind')">야근</button>
+          <button class="chip" aria-pressed="false" onclick="pick(this,'busy-kind')">약속</button>
+        </div>
+        <div style="margin-top:14px"><button class="btn ghost" onclick="addBusy()">표시하기</button></div>
+      </div>
+      <h2>다가오는 바쁜 날</h2>
+      <ul class="list" id="busy-next"></ul>
+      <details>
+        <summary>지난 바쁜 날</summary>
+        <ul class="list">
+          <li><span class="l"><svg class="ic"><use href="#i-cal"/></svg>10/22 (목) 회식</span><span class="muted">body.csv "전날 회식"</span></li>
+          <li><span class="l"><svg class="ic"><use href="#i-cal"/></svg>10/08 (목) 회식</span><span class="muted">body.csv "전날 회식"</span></li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ⑨ 내 정보 -->
+    <section class="screen" id="s-me">
+      <h1>내 정보</h1>
+      <ul class="list">
+        <li><span class="l"><svg class="ic"><use href="#i-scale"/></svg>목표 체중</span><button class="link" onclick="openSheet('goalw')">53 kg ›</button></li>
+        <li><span class="l"><svg class="ic"><use href="#i-dumbbell"/></svg>선호 운동 장소</span><button class="link" onclick="go('home')">헬스장 ›</button></li>
+      </ul>
+      <p class="muted" style="margin-top:12px">주 몇 번은 운동할 날에서 정해요. 목표 체중 53kg은 프로필의 "현재 56kg에서 3kg 감량" 목표예요.</p>
+    </section>
+  </main>
+
+  <nav class="menu" aria-label="메뉴">
+    <button data-go="home" onclick="homeTab('today');go('home')"><svg class="ic"><use href="#i-dumbbell"/></svg><span>오늘 할 운동</span></button>
+    <button data-go="weight" onclick="go('weight')"><svg class="ic"><use href="#i-scale"/></svg><span>체중</span></button>
+    <button data-go="goal" onclick="go('goal')"><svg class="ic"><use href="#i-target"/></svg><span>이번 주 운동 목표</span></button>
+    <button data-go="busy" onclick="go('busy')"><svg class="ic"><use href="#i-cal"/></svg><span>바쁜 날</span></button>
+  </nav>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="sheet-bg" id="sheet-bg" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<div class="tools" id="tools">
+  <button onclick="document.getElementById('tools').classList.toggle('open')">⚙ 보기 · 상태</button>
+  <div class="panel">
+    <b style="color:var(--ink)">보기</b>
+    <div class="chips" style="margin:6px 0 12px">
+      <button class="chip" id="v-mob" onclick="setView('mob')">모바일 보기</button>
+      <button class="chip" id="v-desk" onclick="setView('desk')">데스크톱 보기</button>
+    </div>
+    <b style="color:var(--ink)">상태 미리 보기</b>
+    <div class="chips" id="st-chips" style="margin-top:6px"></div>
+    <p class="muted" style="margin-top:8px">빈 상태 · 오류 · 로딩 · 이상치가 각 화면에서 어떻게 보이는지 바꿔 볼 수 있어요.</p>
+  </div>
+</div>
+
+<script>
+if(!document.body.dataset.state) document.body.dataset.state='normal';
+// ── 데이터 (data 폴더 CSV 값만 사용) ─────────────────────────────
+// workout.csv 이번 주(10/26~11/01): 10/26 홈트 20분(유튜브 하체 홈트), 10/30 헬스장 30분(러닝머신 걷기, 3,800보)
+const baseSessions = [
+  {date:'10/30 (금)', place:'gym', min:30, what:'러닝머신 걷기', dow:4},
+  {date:'10/26 (월)', place:'home', min:20, what:'유튜브 하체 홈트', dow:0},
+];
+let sessions = baseSessions.slice();
+// body.csv: 아침 빈속(표준) + 저녁 기록
+const weights = [
+  {d:'10/05',kg:56.2,c:'am'},{d:'10/07',kg:56.0,c:'am'},{d:'10/09',kg:56.9,c:'am',note:'전날 회식'},
+  {d:'10/14',kg:56.4,c:'pm'},{d:'10/19',kg:55.8,c:'am'},{d:'10/21',kg:55.6,c:'am'},
+  {d:'10/23',kg:56.5,c:'am',note:'전날 회식'},{d:'10/26',kg:55.5,c:'am'},{d:'10/30',kg:56.3,c:'pm'}
+];
+const weekly=[3,0,3,2]; // workout.csv 주별 운동 횟수
+const placeName={gym:'헬스장',home:'집',out:'밖에서'}, placeIcon={gym:'dumbbell',home:'home',out:'walk'};
+const plans={
+  gym:{moves:[['레그 프레스','레그 프레스 머신','12회 × 3세트','하체'],['랫 풀다운','랫 풀다운 머신','12회 × 3세트','상체'],['러닝머신 걷기','러닝머신','15분','전신']],
+       judge:'오늘은 러닝머신 앞에 기구 두 개를 더해 보세요.',
+       why:['헬스장에 간 3번(10/05 · 10/07 · 10/30) 모두 러닝머신 걷기만 했어요 (workout.csv).','익숙한 러닝머신은 마지막에 두고, 앉아서 하는 기구부터 골랐어요.'],
+       limit:'기구 무게 기록이 없어 무게는 정하지 않았어요.',
+       alt:{moves:[['러닝머신 걷기','러닝머신','30분','전신']],judge:'오늘은 지난번처럼 러닝머신 30분만 해도 좋아요.'}},
+  home:{moves:[['유튜브 하체 홈트','따라 하기 영상','20분','하체'],['전신 스트레칭','따라 하기 영상','15분','전신']],
+       judge:'집에서는 해 본 영상부터 시작해요.',
+       why:['하체 홈트 20분(10/26)과 전신 스트레칭 15분(10/11)을 해 봤어요 (workout.csv).'],
+       limit:'영상 길이는 예시예요.',
+       alt:{moves:[['전신 스트레칭','따라 하기 영상','10분','전신']],judge:'바쁜 날에는 스트레칭 10분만 해도 운동 1회예요.'}},
+  out:{moves:[['퇴근길 한 정거장 먼저 내려 걷기','걷기','30분','전신']],
+       judge:'퇴근길에 한 정거장 먼저 내려 걸어 보세요.',
+       why:['10/19 · 10/21에 퇴근길 걷기 25 · 30분을 했어요 (workout.csv).','10/25 공원 산책은 50분, 6,800보였어요.'],
+       limit:'걸음 수는 걷기 운동을 한 날에만 기록이 있어요.',
+       alt:{moves:[['공원 산책','걷기','50분','전신']],judge:'주말이라면 공원 산책 50분도 좋아요 (10/25).'}}
+};
+const gears=[['레그 프레스 머신','하체'],['랫 풀다운 머신','상체'],['러닝머신','전신'],['덤벨','상체']];
+const dows=['월','화','수','목','금','토','일'], dates=['10/26','10/27','10/28','10/29','10/30','10/31','11/01'], TODAY=5;
+let place='gym', useAlt=false, step=0, setsDone={}, target=3, planDays=[0,2,4], moved={}, busy=[], restT=null, workT=null;
+
+const icon=id=>`<svg class="ic"><use href="#i-${id}"/></svg>`;
+const plan=()=>useAlt?{...plans[place],moves:plans[place].alt.moves,judge:plans[place].alt.judge}:plans[place];
+const st=()=>document.body.dataset.state;
+const curSessions=()=>st()==='empty'?[]:sessions;
+
+// ── 화면 이동 ───────────────────────────────────────────
+const crumbs={move:()=>`오늘 할 운동 > ${step+1}/${plan().moves.length}번째 동작`,save:()=>'오늘 할 운동 > 운동 1회 저장',log:()=>'이번 주 운동 목표 > 운동 기록',days:()=>'이번 주 운동 목표 > 운동할 날',me:()=>'내 정보'};
+const menuOf={home:'home',move:'home',save:'home',weight:'weight',goal:'goal',log:'goal',days:'goal',busy:'busy',me:null};
+let cur='home';
+function go(id){
+  cur=id; clearInterval(restT); clearInterval(workT);
+  document.querySelectorAll('section.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+  document.querySelectorAll('nav.menu button').forEach(b=>{ if(b.dataset.go===menuOf[id]) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  document.getElementById('path').textContent = crumbs[id] ? crumbs[id]() : '';
+  ({home:renderHome,move:renderMove,save:renderSave,goal:renderGoal,log:renderLog,days:renderDays,weight:renderWeight,busy:renderBusy}[id]||(()=>{}))();
+  window.scrollTo(0,0);
+}
+function homeTab(t){
+  document.getElementById('tab-today').setAttribute('aria-selected',t==='today');
+  document.getElementById('tab-review').setAttribute('aria-selected',t==='review');
+  document.getElementById('home-today').hidden=t!=='today';
+  document.getElementById('home-review').hidden=t!=='review';
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2800)}
+function pick(btn,group){document.querySelectorAll('#'+group+' .chip').forEach(c=>c.setAttribute('aria-pressed',c===btn))}
+function openSheet(kind,arg){
+  const s=document.getElementById('sheet'); let h='';
+  if(kind==='light') h=`<h2 style="margin-top:0">오늘은 어떻게 할까요?</h2><p class="muted">쉬어도 실패가 아니에요. 고르기만 하면 돼요.</p>
+    <div class="btns" style="flex-direction:column"><button class="btn" onclick="useAlt=true;closeSheet();renderHome();toast('가벼운 안으로 바꿨어요.')">가볍게 할래요</button>
+    <button class="btn ghost" onclick="closeSheet();go('goal');toast('요일 줄에서 옮길 날을 골라 주세요.')">다른 날로 옮길래요</button></div>`;
+  if(kind==='move') h=`<h2 style="margin-top:0">${dows[arg]}요일 운동을 다른 날로 옮길까요?</h2><p class="muted">이번 주 남은 날 중에서 골라 주세요.</p>
+    <div class="btns">${[5,6].filter(i=>!planDays.includes(i)).map(i=>`<button class="btn small" onclick="doMove(${arg},${i})">${dows[i]}요일 (${dates[i]})</button>`).join('')}<button class="btn ghost small" onclick="closeSheet()">그대로 둘게요</button></div>`;
+  if(kind==='long') h=`<h2 style="margin-top:0">운동한 시간이 ${arg}분이 맞나요?</h2><p class="muted">평소 운동 시간은 15~50분이었어요 (workout.csv).</p>
+    <div class="btns"><button class="btn small" onclick="closeSheet();saveSession(true)">맞아요</button><button class="btn ghost small" onclick="closeSheet();document.getElementById('sv-min').focus()">고칠게요</button></div>`;
+  if(kind==='dup') h=`<h2 style="margin-top:0">오늘 ${placeName[place]} 운동이 이미 1회 있어요</h2><p class="muted">하나로 합치면 이번 주 횟수는 그대로예요.</p>
+    <div class="btns"><button class="btn small" onclick="closeSheet();mergeSession()">하나로 합칠게요</button><button class="btn ghost small" onclick="closeSheet();saveSession(true,true)">따로 저장</button></div>`;
+  if(kind==='goalw') h=`<h2 style="margin-top:0">목표 체중</h2><div class="unit"><input type="number" value="53" step="0.5"><span>kg</span></div><div class="btns"><button class="btn" onclick="closeSheet();toast('목표 체중을 저장했어요. (미리 보기)')">저장</button></div>`;
+  s.innerHTML=h; document.getElementById('sheet-bg').style.display='flex';
+}
+function closeSheet(){document.getElementById('sheet-bg').style.display='none'}
+
+// ── ① 첫 화면 ─────────────────────────────────────────
+function setPlace(p){place=p;useAlt=false;renderHome()}
+function ringSvg(done,total,size){
+  const r=size/2-8,c=2*Math.PI*r,seg=c/total,gap=6;
+  let a='';for(let i=0;i<total;i++){a+=`<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${i<done?'var(--done)':'var(--hairline)'}" stroke-width="8" stroke-dasharray="${seg-gap} ${c-seg+gap}" stroke-dashoffset="${-i*seg}" transform="rotate(-90 ${size/2} ${size/2})" stroke-linecap="round"/>`}
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${a}</svg>`;
+}
+function weekDone(){return new Set(curSessions().map(s=>s.dow)).size}
+function renderHome(){
+  const done=weekDone(), left=Math.max(target-done,0);
+  document.getElementById('hello').innerHTML=`<div class="ring" style="width:64px;height:64px">${ringSvg(Math.min(done,target),target,64)}<b style="font-size:15px">${done}/${target}</b></div>
+    <div><span class="muted">10/31 (토)</span><br><b>${left?`이번 주 목표까지 ${left}번 남았어요${left===1?' · 오늘 하면 채워요':''}`:'이번 주 목표를 채웠어요. 오늘은 원하면 가볍게!'}</b></div>`;
+  document.getElementById('places').innerHTML=Object.keys(placeName).map(p=>`<button class="place" aria-pressed="${p===place}" onclick="setPlace('${p}')">${icon(placeIcon[p])}${placeName[p]}</button>`).join('');
+  const P=plan(), m=P.moves;
+  document.getElementById('moves-title').innerHTML=`${icon('dumbbell')}오늘 할 동작 ${m.length}개 <span class="badge">순서대로</span>`;
+  document.getElementById('moves').innerHTML=m.map((x,i)=>`<li><span class="tile">${icon(x[3]==='하체'||x[3]==='상체'?'dumbbell':placeIcon[place]==='dumbbell'?'walk':placeIcon[place])}</span><span class="mv"><b>${i+1}. ${x[0]}</b><span>${x[1]} · ${x[3]}</span></span><span class="amt">${x[2]}</span></li>`).join('');
+  document.getElementById('trust').innerHTML=`<div class="judge">${icon('spark')}<span><span class="lbl">AI 추천 · 예시</span><br>${P.judge}</span></div>
+    <details style="border:0;padding:0;margin:8px 0 0"><summary style="font-weight:400;color:var(--muted);font-size:14px"><span class="lbl">근거</span>근거 자세히</summary><ul>${P.why.map(w=>`<li>${w}</li>`).join('')}</ul></details>
+    <p class="muted" style="margin-top:6px"><span class="lbl">한계</span>${P.limit}</p>
+    <button class="link" onclick="useAlt=!useAlt;renderHome()">${useAlt?'처음 안 보기':'다른 안 보기'}</button>`;
+  const bars=document.getElementById('countBars');
+  bars.innerHTML=weekly.map((v,i)=>`<rect x="${10+i*31}" y="${58-v*15}" width="20" height="${Math.max(v*15,2)}" rx="4" fill="${i===3?'var(--primary)':'var(--accent)'}"/><text x="${20+i*31}" y="${53-v*15}" font-size="10" text-anchor="middle" fill="currentColor">${v}</text><text x="${20+i*31}" y="72" font-size="9" text-anchor="middle" fill="#888">${i+1}주</text>`).join('');
+  const am=weights.filter(w=>w.c==='am');
+  const pts=am.map((w,i)=>[8+i*(116/(am.length-1)),60-(w.kg-55.3)*32]);
+  document.getElementById('wLineMini').setAttribute('points',pts.map(p=>p.join(',')).join(' '));
+  document.getElementById('wDotsMini').innerHTML=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${am[i].note?3.5:2.5}" fill="${am[i].note?'var(--canvas)':'var(--primary)'}" stroke="var(--primary)" stroke-width="1.5"/>`).join('');
+}
+function startWorkout(){step=0;setsDone={};go('move')}
+function usePrev(){place='gym';useAlt=true;document.body.dataset.state='normal';renderStateChips();renderHome();toast('지난번 운동으로 준비했어요.')}
+
+// ── ② 동작 카드 ──────────────────────────────────────
+function fmt(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+function renderMove(){
+  const m=plan().moves, x=m[step];
+  document.getElementById('steps').innerHTML=m.map((_,i)=>`<span class="dot ${i<step?'done':i===step?'now':''}">${i<step?'✓':i+1}</span>${i<m.length-1?`<span class="bar ${i<step?'done':''}"></span>`:''}`).join('');
+  document.getElementById('move-name').textContent=x[0];
+  document.getElementById('move-gear').innerHTML=`${icon(x[3]==='하체'||x[3]==='상체'?'dumbbell':'walk')}${x[1]} · ${x[3]}`;
+  document.getElementById('move-amt').textContent=x[2];
+  const sets=(x[2].match(/(\d+)세트/)||[])[1];
+  const tr=document.getElementById('move-track');
+  if(sets){
+    const k=step; setsDone[k]=setsDone[k]||[];
+    tr.innerHTML=`<div class="sets">${Array.from({length:+sets},(_,i)=>`<button class="set" aria-pressed="${setsDone[k].includes(i)}" onclick="toggleSet(${i})">${i+1}세트<br><span class="muted" style="font-weight:400">${x[2].split(' ×')[0]}</span></button>`).join('')}</div>
+      <div class="timer" id="rest" hidden><span>${icon('clock')} 쉬는 시간</span><b id="rest-t">1:00</b><button class="link" onclick="clearInterval(restT);document.getElementById('rest').hidden=true">건너뛰기</button></div>`;
+  } else {
+    const mins=parseInt(x[2]); tr.innerHTML=`<div class="timer"><span>${icon('clock')} ${x[2]} 타이머</span><b id="work-t">${fmt(mins*60)}</b><button class="btn small" id="work-b" onclick="toggleWork(${mins})">시작</button></div>`;
+  }
+  document.getElementById('next-btn').innerHTML= step===m.length-1 ? `${icon('check')}다 했어요, 저장하기` : `다 했어요, 다음 동작<svg class="ic flip"><use href="#i-arrow"/></svg>`;
+  document.getElementById('gear-find').open=false; findGear('');
+}
+function toggleSet(i){
+  const a=setsDone[step]; const on=a.includes(i);
+  setsDone[step]=on?a.filter(v=>v!==i):[...a,i]; renderMove();
+  const total=document.querySelectorAll('.set').length;
+  if(!on && setsDone[step].length<total){ let s=60; document.getElementById('rest').hidden=false; clearInterval(restT); restT=setInterval(()=>{s--; const e=document.getElementById('rest-t'); if(!e||s<0){clearInterval(restT);return} e.textContent=fmt(s); if(s===0){toast('쉬는 시간이 끝났어요. 다음 세트!')}},1000); }
+  if(!on && setsDone[step].length===total) toast('이 동작을 다 했어요. 다음 동작으로 넘어가세요.');
+}
+let workLeft=null;
+function toggleWork(mins){
+  const b=document.getElementById('work-b');
+  if(workT){clearInterval(workT);workT=null;b.textContent='이어서';return}
+  if(workLeft===null) workLeft=mins*60;
+  b.textContent='잠깐 멈춤';
+  workT=setInterval(()=>{workLeft--; const e=document.getElementById('work-t'); if(!e){clearInterval(workT);workT=null;return} e.textContent=fmt(Math.max(workLeft,0)); if(workLeft<=0){clearInterval(workT);workT=null;workLeft=null;toast('시간을 다 채웠어요!')}},1000);
+}
+function nextMove(){workLeft=null;const n=plan().moves.length; if(step<n-1){step++;go('move')} else go('save')}
+function findGear(q){document.getElementById('gear-list').innerHTML=gears.filter(g=>!q||g[0].includes(q)||g[1].includes(q)).map(g=>`<li><span class="l">${icon('dumbbell')}${g[0]}</span><span class="muted">${g[1]} · 위치 정보 없음(예시)</span></li>`).join('')||`<li class="muted">찾는 기구가 없어요. 어디 운동(하체 · 상체 · 전신)으로 찾아볼까요?</li>`}
+
+// ── ③ 운동 1회 저장 ──────────────────────────────────
+function renderSave(){
+  document.getElementById('sv-place').innerHTML=Object.keys(placeName).map(p=>`<button class="place" aria-pressed="${p===place}" onclick="place='${p}';renderSave()">${icon(placeIcon[p])}${placeName[p]}</button>`).join('');
+  document.getElementById('sv-moves').value=plan().moves.map(m=>m[0]).join(' · ');
+  const inp=document.getElementById('sv-min'); if(!inp.value) inp.value=plan().moves.reduce((s,m)=>s+(parseInt(m[2].match(/(\d+)분/)?.[1])||10),0); checkSave();
+}
+function checkSave(){const v=+document.getElementById('sv-min').value;document.getElementById('save-btn').disabled=!(v>0);document.getElementById('sv-help').textContent=v>0?'':'운동한 시간을 넣으면 저장할 수 있어요.'}
+function trySave(){
+  const min=+document.getElementById('sv-min').value; if(!(min>0)) return;
+  if(st()==='error'){window.scrollTo(0,0);toast('저장하지 못했어요. 입력한 내용은 그대로예요.');return}
+  if(min>300){openSheet('long',min);return}
+  saveSession(false);
+}
+function saveSession(skipLong,force){
+  const min=+document.getElementById('sv-min').value;
+  if(!force && sessions.some(s=>s.dow===TODAY&&s.place===place)){openSheet('dup');return}
+  sessions.unshift({date:'10/31 (토)',place,min,what:plan().moves.map(m=>m[0]).join(' · '),dow:TODAY});
+  document.getElementById('sv-min').value=''; toast('저장했어요. 이번 주 운동이 하나 늘었어요.'); go('goal');
+}
+function mergeSession(){const s=sessions.find(s=>s.dow===TODAY&&s.place===place); s.min+=+document.getElementById('sv-min').value; document.getElementById('sv-min').value=''; toast('오늘 기록 하나로 합쳤어요.'); go('goal')}
+
+// ── ④ 이번 주 운동 목표 ──────────────────────────────
+function renderGoal(){
+  const ss=curSessions(), done=new Set(ss.map(s=>s.dow)).size, left=Math.max(target-done,0);
+  document.getElementById('ring').innerHTML=ringSvg(Math.min(done,target),target,92)+`<b>${done}/${target}</b>`;
+  document.getElementById('goal-count').textContent= left?`${left}번 남았어요`:`목표를 채웠어요`;
+  document.getElementById('goal-sub').textContent=`주 ${target}회 중 ${done}회 했어요`;
+  document.getElementById('goal-badge').innerHTML= done===0?'':left?`<span class="badge ok">${icon('check')}할 수 있어요</span>`:`<span class="badge ok">${icon('check')}목표 달성</span>`;
+  document.getElementById('week').innerHTML=dows.map((d,i)=>{
+    const did=ss.some(s=>s.dow===i), isPlan=planDays.includes(i)&&!did, past=i<TODAY, mv=moved[i]!==undefined;
+    let cls='day',sq=icon('rest'),lbl='쉼';
+    if(did){cls+=' did';sq=icon('check');lbl='한 날'}
+    else if(mv){cls+=' moved';sq=icon('swap');lbl=`${dows[moved[i]]}로 옮김`}
+    else if(isPlan&&past){cls+=' miss';sq=icon('swap');lbl='옮기기'}
+    else if(isPlan){cls+=' plan';sq=icon('dumbbell');lbl='할 날'}
+    if(i===TODAY) cls+=' today';
+    const tag=(isPlan&&past&&!mv)?`button onclick="openSheet('move',${i})"`:'div';
+    return `<${tag} class="${cls}"><span class="d">${d}</span><span class="sq">${sq}</span>${lbl}<span>${dates[i].slice(3)}</span></${tag.split(' ')[0]}>`}).join('');
+  document.getElementById('lite-card').hidden=busy.length===0;
+  document.getElementById('goal-log').innerHTML=ss.length?ss.slice(0,3).map(s=>`<li><span class="l"><span class="tile" style="width:36px;height:36px">${icon(placeIcon[s.place])}</span><span><b style="color:var(--ink)">${s.date}</b><br><span class="muted">${placeName[s.place]} · ${s.what}</span></span></span><span>${s.min}분</span></li>`).join(''):`<li class="muted">아직 이번 주 기록이 없어요.</li>`;
+}
+function doMove(from,to){moved[from]=to;planDays=[...planDays,to];closeSheet();renderGoal();toast(`${dows[from]}요일 운동을 ${dows[to]}요일로 옮겼어요.`)}
+
+// ── ⑤ 운동 기록 목록 ─────────────────────────────────
+let logF='all';
+function renderLog(){
+  document.getElementById('log-filter').innerHTML=['all','gym','home','out'].map(p=>`<button class="chip" aria-pressed="${p===logF}" onclick="logF='${p}';renderLog()">${p==='all'?'전체':icon(placeIcon[p])+placeName[p]}</button>`).join('');
+  const rows=curSessions().filter(s=>logF==='all'||s.place===logF);
+  document.getElementById('log-list').innerHTML=rows.length?rows.map(s=>`<li><span class="l"><span class="tile" style="width:36px;height:36px">${icon(placeIcon[s.place])}</span><span><b style="color:var(--ink)">${s.date} · ${placeName[s.place]}</b><br><span class="muted">${s.what}</span></span></span><span>${s.min}분</span></li>`).join(''):'<li class="muted">이 장소에서 한 운동은 아직 없어요.</li>';
+}
+
+// ── ⑥ 운동할 날 ──────────────────────────────────────
+let pickDays=[0,2,6], pickTimes=3;
+function renderDays(){
+  document.getElementById('times').innerHTML=[2,3,4].map(n=>`<button class="chip" aria-pressed="${n===pickTimes}" onclick="pickTimes=${n};renderDays()">${n}번</button>`).join('');
+  document.getElementById('day-pick').innerHTML=dows.map((d,i)=>`<button class="day pick" aria-pressed="${pickDays.includes(i)}" onclick="toggleDay(${i})"><span class="d">${d}</span><span class="sq">${pickDays.includes(i)?icon('check'):''}</span></button>`).join('');
+}
+function toggleDay(i){pickDays=pickDays.includes(i)?pickDays.filter(x=>x!==i):[...pickDays,i];renderDays()}
+function saveDays(){planDays=[...pickDays];moved={};target=pickTimes;toast('운동할 날을 저장했어요.');go('goal')}
+
+// ── ⑦ 체중 ───────────────────────────────────────────
+let wF='am';
+function wFilter(f,btn){wF=f;pick(btn,'w-filter');renderWeight()}
+function renderWeight(){
+  const am=weights.filter(w=>w.c==='am');
+  const pts=am.map((w,i)=>[24+i*(296/(am.length-1)),104-(w.kg-55.3)*52]);
+  document.getElementById('wLine').setAttribute('points',pts.map(p=>p.join(',')).join(' '));
+  document.getElementById('wDots').innerHTML=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${am[i].note?6:4.5}" fill="${am[i].note?'var(--canvas)':'var(--primary)'}" stroke="var(--primary)" stroke-width="2"/><text x="${p[0]}" y="${p[1]-11}" font-size="11" text-anchor="middle" fill="currentColor">${am[i].kg}</text><text x="${p[0]}" y="136" font-size="10" text-anchor="middle" fill="#888">${am[i].d}</text>`).join('');
+  const rows=weights.filter(w=>wF==='all'||w.c==='am').slice().reverse();
+  document.getElementById('w-list').innerHTML=rows.map(w=>`<li><span class="l">${icon('scale')}<b style="color:var(--ink)">${w.d}</b> ${w.kg} kg</span><span>${w.c==='am'?'<span class="badge">아침 빈속</span>':'<span class="badge note">저녁</span>'}${w.note?` <span class="muted">${w.note}</span>`:''}</span></li>`).join('');
+}
+
+// ── ⑧ 바쁜 날 ────────────────────────────────────────
+function renderBusy(){document.getElementById('busy-next').innerHTML=busy.length?busy.map(b=>`<li><span class="l">${icon('cal')}<b style="color:var(--ink)">${b.d}</b> ${b.k}</span><span class="muted">쉬운 운동을 제안해요</span></li>`).join(''):`<li class="muted">다가오는 바쁜 날이 없어요. 회식 · 야근 · 약속이 생기면 미리 표시해 두세요.</li>`}
+function addBusy(){const d=document.getElementById('busy-date').value;const k=document.querySelector('#busy-kind .chip[aria-pressed=true]').textContent;busy.push({d,k});renderBusy();toast('바쁜 날로 표시했어요. 이번 주 운동 목표에 쉬운 선택지가 보여요.')}
+
+// ── 보기 · 상태 미리 보기 ─────────────────────────────
+const states=[['normal','정상'],['empty','빈 상태'],['error','오류'],['loading','로딩'],['outlier','이상치']];
+function renderStateChips(){document.getElementById('st-chips').innerHTML=states.map(([k,v])=>`<button class="chip" aria-pressed="${st()===k}" onclick="setState('${k}')">${v}</button>`).join('')}
+function setState(k){document.body.dataset.state=k;renderStateChips();go(cur);toast(`상태 미리 보기: ${states.find(s=>s[0]===k)[1]}`)}
+function setView(v){document.body.classList.toggle('desk',v==='desk');document.body.classList.toggle('mob',v==='mob');document.getElementById('v-desk').setAttribute('aria-pressed',v==='desk');document.getElementById('v-mob').setAttribute('aria-pressed',v==='mob');window.scrollTo(0,0)}
+setView(window.innerWidth>=900?'desk':'mob');
+renderStateChips();
+
+// ── 언어 바꾸기 (한국어 · English · العربية) ───────────────
+// 화면 문구는 한국어로 그리고, 다른 언어를 고르면 아래 사전으로 바꿔 보여 줍니다. 아랍어는 오른쪽에서 왼쪽(RTL)으로 배치합니다.
+let lang='ko';
+const LANGS={ko:'한국어',en:'English',ar:'العربية'};
+const DOWS={en:{월:'Mon',화:'Tue',수:'Wed',목:'Thu',금:'Fri',토:'Sat',일:'Sun'},ar:{월:'إثن',화:'ثلا',수:'أرب',목:'خمي',금:'جمع',토:'سبت',일:'أحد'}};
+const EXACT={
+ '월':['Mon','إثن'],'화':['Tue','ثلا'],'수':['Wed','أرب'],'목':['Thu','خمي'],'금':['Fri','جمع'],'토':['Sat','سبت'],'일':['Sun','أحد'],
+ '집':['Home','المنزل'],'보':[' steps',' خطوة'],'분':['min','دقيقة'],'쉼':['Rest','راحة'],'전체':['All','الكل'],'저장':['Save','حفظ'],'시작':['Start','ابدأ'],'동작':['Moves','الحركات'],
+ '날짜':['Date','التاريخ'],'종류':['Type','النوع'],'체중':['Weight','الوزن'],'요일':['Days','الأيام'],'오류':['Error','خطأ'],'로딩':['Loading','تحميل'],'정상':['Normal','عادي'],
+ '이상치':['Outlier','قيمة شاذة'],'테마':['Theme','السمة'],'조용한 노트':['Quiet notebook','دفتر هادئ'],'산뜻한 초록':['Fresh green','أخضر منعش'],'따뜻한 웰니스':['Warm wellness','عافية دافئة'],'빈 상태':['Empty','فارغ'],'보기':['View','العرض'],'근거':['Evidence','الدليل'],'한계':['Limits','الحدود'],'어디서 했나요':['Where','أين'],
+};
+const PHRASES=[
+ ['오늘은 가볍게 · 다른 날로 옮길래요','Go light today · Move to another day','خفّف اليوم · انقله إلى يوم آخر'],
+ ['이번 달은 운동 횟수와 아침 체중 모두 조금씩 나아지고 있어요.','This month, both your workouts and morning weight are slowly improving.','هذا الشهر، تتحسّن تمارينك ووزنك الصباحي شيئًا فشيئًا.'],
+ ['workout.csv 주별 운동 3 · 0 · 3 · 2회, body.csv 아침 빈속 기록 7회(10/05~10/26)','workout.csv weekly workouts 3 · 0 · 3 · 2, body.csv 7 morning fasted weigh-ins (10/05–10/26)','workout.csv: التمارين الأسبوعية 3 · 0 · 3 · 2، body.csv: 7 أوزان صباحية على معدة فارغة (10/05–10/26)'],
+ ['걸음 수는 걷기 운동을 한 날에만 기록이 있어요. 저녁에 잰 체중 2회는 흐름에서 뺐어요.','Steps are only recorded on walking days. Two evening weigh-ins are left out of the trend.','تُسجَّل الخطوات في أيام المشي فقط. استُبعد وزنان مسائيان من المنحنى.'],
+ ['걸음 수는 걷기 운동을 한 날에만 기록이 있어요.','Steps are only recorded on walking days.','تُسجَّل الخطوات في أيام المشي فقط.'],
+ ['오늘은 러닝머신 앞에 기구 두 개를 더해 보세요.','Today, add two machines before your treadmill walk.','اليوم، أضف جهازين قبل المشي على جهاز المشي.'],
+ ['헬스장에 간 3번(10/05 · 10/07 · 10/30) 모두 러닝머신 걷기만 했어요 (workout.csv).','On all 3 gym visits (10/05 · 10/07 · 10/30) you only walked on the treadmill (workout.csv).','في زياراتك الثلاث للنادي (10/05 · 10/07 · 10/30) مشيت على جهاز المشي فقط (workout.csv).'],
+ ['익숙한 러닝머신은 마지막에 두고, 앉아서 하는 기구부터 골랐어요.','The familiar treadmill comes last; seated machines come first.','جهاز المشي المألوف في النهاية، والأجهزة التي تُستخدم جلوسًا أولًا.'],
+ ['기구 무게 기록이 없어 무게는 정하지 않았어요.','No weight records yet, so no weights are set.','لا توجد سجلات للأوزان بعد، لذلك لم نحدّد الأوزان.'],
+ ['오늘은 지난번처럼 러닝머신 30분만 해도 좋아요.','Today, a 30-minute treadmill walk like last time is fine too.','اليوم، يكفي المشي 30 دقيقة على جهاز المشي مثل المرة الماضية.'],
+ ['집에서는 해 본 영상부터 시작해요.','At home, start with videos you have tried.','في المنزل، ابدأ بالفيديوهات التي جرّبتها.'],
+ ['하체 홈트 20분(10/26)과 전신 스트레칭 15분(10/11)을 해 봤어요 (workout.csv).','You did a 20-min lower-body workout (10/26) and a 15-min full-body stretch (10/11) (workout.csv).','جرّبت تمرين الجزء السفلي 20 دقيقة (10/26) وتمدّد الجسم كاملًا 15 دقيقة (10/11) (workout.csv).'],
+ ['영상 길이는 예시예요.','Video lengths are samples.','أطوال الفيديو أمثلة.'],
+ ['바쁜 날에는 스트레칭 10분만 해도 운동 1회예요.','On busy days, a 10-min stretch still counts as a workout.','في الأيام المزدحمة، 10 دقائق من التمدّد تُحسب تمرينًا.'],
+ ['퇴근길에 한 정거장 먼저 내려 걸어 보세요.','Get off one stop early and walk home.','انزل قبل محطة واحدة وامشِ إلى المنزل.'],
+ ['10/19 · 10/21에 퇴근길 걷기 25 · 30분을 했어요 (workout.csv).','On 10/19 · 10/21 you walked home for 25 · 30 min (workout.csv).','في 10/19 · 10/21 مشيت إلى المنزل 25 · 30 دقيقة (workout.csv).'],
+ ['10/25 공원 산책은 50분, 6,800보였어요.','Your 10/25 park walk was 50 min, 6,800 steps.','كانت نزهتك في الحديقة يوم 10/25 مدتها 50 دقيقة و6,800 خطوة.'],
+ ['주말이라면 공원 산책 50분도 좋아요 (10/25).','On weekends, a 50-min park walk works too (10/25).','في عطلة نهاية الأسبوع، تصلح نزهة 50 دقيقة في الحديقة (10/25).'],
+ ['기구 이름이나 어디 운동(하체 · 상체 · 전신)으로 찾을 수 있어요.','Search by machine name or body part (lower · upper · full body).','ابحث باسم الجهاز أو بالجزء (سفلي · علوي · كامل الجسم).'],
+ ['오늘 할 운동에서 넘어온 값을 미리 채웠어요. 확인하고 ','Values from today\'s workout are filled in. Check them and just press ','ملأنا القيم من تمرين اليوم. راجعها ثم اضغط '],
+ ['만 누르면 돼요.','.','.'],
+ ['아직 저장하지 못했어요.','Not saved yet.','لم يُحفظ بعد.'],
+ [' 연결되면 자동으로 다시 저장할게요. 입력한 내용은 그대로 남아 있어요.',' We\'ll retry when you\'re back online. Your entries are kept.',' سنعيد المحاولة عند عودة الاتصال. ما أدخلته محفوظ.'],
+ ['운동한 시간을 넣으면 저장할 수 있어요.','Enter a workout time to save.','أدخل مدة التمرين للحفظ.'],
+ ['이번 주 첫 운동을 기다리고 있어요.','Waiting for your first workout this week.','ننتظر أول تمرين لك هذا الأسبوع.'],
+ ['오늘 할 운동에서 한 번만 시작해 보세요.','Try starting once from Today\'s workout.','جرّب البدء مرة واحدة من «تمرين اليوم».'],
+ ['✓ 한 날 · 점선 할 날 · ⇄ 옮긴 날 · 굵은 테두리 오늘 · 회색 점선을 누르면 다른 날로 옮겨요','✓ done · dashed planned · ⇄ moved · bold border today · tap a grey dashed day to move it','✓ تم · متقطع مخطط · ⇄ نُقل · إطار عريض اليوم · اضغط يومًا رماديًا متقطعًا لنقله'],
+ ['운동을 놓지 않을 만큼만 해 볼까요?','Just enough to keep the habit going?','ما يكفي فقط للحفاظ على العادة؟'],
+ ['지난주(10/19~10/25)에 운동한 월 · 수 · 일을 미리 골라 뒀어요.','Mon · Wed · Sun, the days you worked out last week (10/19–10/25), are pre-selected.','اخترنا مسبقًا الإثنين · الأربعاء · الأحد، الأيام التي تمرّنت فيها الأسبوع الماضي (10/19–10/25).'],
+ ['지난번(10/23)은 전날 회식이 있던 아침이라 높게 나왔어요. 하루 사이 변화는 수분 · 식사 때문인 경우가 많아요.','Last time (10/23) was the morning after a team dinner, so it read high. Day-to-day changes are often water and food.','كانت المرة الماضية (10/23) صباح ما بعد عشاء العمل، لذلك كان الرقم مرتفعًا. التغيّر اليومي غالبًا بسبب الماء والطعام.'],
+ ['○ 전날 회식 · 흐름에는 아침 빈속 기록만 써요','○ dinner out the night before · the trend uses morning fasted weigh-ins only','○ عشاء عمل في الليلة السابقة · المنحنى يستخدم أوزان الصباح على معدة فارغة فقط'],
+ ['하루 사이 체중이 크게 바뀌었어요 (10/23 +0.9kg).','Big one-day weight change (10/23 +0.9kg).','تغيّر كبير في الوزن خلال يوم (10/23 +0.9kg).'],
+ ['전날 회식이 있었어요. 아침 빈속 흐름은 그대로 내려가고 있어요.','There was a team dinner the night before. Your morning fasted trend is still going down.','كان هناك عشاء عمل في الليلة السابقة. منحنى الصباح ما زال ينخفض.'],
+ ['다른 조건에서 잰 체중이 있어요 (10/30 저녁 56.3kg).','A weigh-in was taken under different conditions (10/30 evening 56.3kg).','وزن مسجّل في ظروف مختلفة (10/30 مساءً 56.3kg).'],
+ ['저녁에 잰 숫자는 아침보다 높게 나와요. 흐름에서는 따로 표시할게요.','Evening numbers read higher than morning ones. We show them separately.','أرقام المساء أعلى من الصباح. نعرضها بشكل منفصل.'],
+ ['아침 빈속 기록이 2번 더 쌓이면 흐름을 보여 드려요.','Two more morning fasted weigh-ins and we\'ll show your trend.','بعد وزنين صباحيين آخرين سنعرض المنحنى.'],
+ ['다가오는 바쁜 날이 없어요. 회식 · 야근 · 약속이 생기면 미리 표시해 두세요.','No upcoming busy days. Mark team dinners, overtime or plans ahead of time.','لا أيام مزدحمة قادمة. علّم عشاء العمل أو العمل الإضافي أو المواعيد مسبقًا.'],
+ ['주 몇 번은 운동할 날에서 정해요. 목표 체중 53kg은 프로필의 "현재 56kg에서 3kg 감량" 목표예요.','Times per week are set in Workout days. The 53kg target comes from the profile goal "lose 3kg from 56kg".','يُحدَّد عدد المرات في «أيام التمرين». هدف 53kg من هدف الملف الشخصي «خسارة 3kg من 56kg».'],
+ ['빈 상태 · 오류 · 로딩 · 이상치가 각 화면에서 어떻게 보이는지 바꿔 볼 수 있어요.','Switch to see how each screen handles empty, error, loading and outlier states.','بدّل لترى كيف تعرض كل شاشة الحالات: فارغة، خطأ، تحميل، قيمة شاذة.'],
+ ['새 운동을 준비하고 있어요. 그동안 지난번 운동을 먼저 보여 드려요.','Preparing a new workout. Here is your last one meanwhile.','نُجهّز تمرينًا جديدًا. إليك آخر تمرين في الأثناء.'],
+ ['새 운동을 불러오지 못했어요.','Couldn\'t load a new workout.','تعذّر تحميل تمرين جديد.'],
+ ['지난번 운동(10/30 러닝머신 걷기 30분)으로 시작할까요?','Start with your last workout (10/30 treadmill walk, 30 min)?','هل تبدأ بآخر تمرين (10/30 مشي على جهاز المشي، 30 دقيقة)؟'],
+ ['지난번 운동으로 시작','Start last workout','ابدأ آخر تمرين'],
+ ['영상을 불러오지 못했어요.','Couldn\'t load the video.','تعذّر تحميل الفيديو.'],
+ [' 글로 된 사용법을 볼까요?',' See the written guide?',' هل تريد الدليل المكتوب؟'],
+ ['등을 곧게 펴고, 손잡이를 가슴 쪽으로 천천히 당겼다가 2초 동안 되돌려요. (예시)','Keep your back straight, pull the bar slowly to your chest, then return over 2 seconds. (sample)','أبقِ ظهرك مستقيمًا، واسحب المقبض ببطء نحو صدرك ثم أعده خلال ثانيتين. (مثال)'],
+ ['오늘은 어떻게 할까요?','What would you like to do today?','ماذا تريد أن تفعل اليوم؟'],
+ ['쉬어도 실패가 아니에요. 고르기만 하면 돼요.','Resting isn\'t failing. Just pick one.','الراحة ليست فشلًا. اختر فقط.'],
+ ['가볍게 할래요','Go light','تمرين خفيف'],['다른 날로 옮길래요','Move to another day','انقله إلى يوم آخر'],
+ ['이번 주 남은 날 중에서 골라 주세요.','Pick one of this week\'s remaining days.','اختر يومًا من الأيام المتبقية هذا الأسبوع.'],['그대로 둘게요','Leave it','اتركه كما هو'],
+ ['평소 운동 시간은 15~50분이었어요 (workout.csv).','Your usual workouts were 15–50 min (workout.csv).','كانت تمارينك المعتادة 15–50 دقيقة (workout.csv).'],
+ ['맞아요','Yes, correct','نعم، صحيح'],['고칠게요','Let me fix it','سأصحّحه'],
+ ['하나로 합치면 이번 주 횟수는 그대로예요.','Merging keeps this week\'s count the same.','الدمج يُبقي عدد هذا الأسبوع كما هو.'],['하나로 합칠게요','Merge them','ادمجهما'],['따로 저장','Save separately','احفظ بشكل منفصل'],
+ ['사용법 영상은 예시예요. 영상이 늦으면 아래 글 설명으로 먼저 시작하면 돼요.','The how-to video is a sample. If it loads slowly, start with the written guide.','فيديو الشرح مثال. إن تأخر، ابدأ بالدليل المكتوب.'],
+ ['이 동작을 다 했어요. 다음 동작으로 넘어가세요.','Move complete. Go to the next one.','انتهيت من هذه الحركة. انتقل إلى التالية.'],
+ ['쉬는 시간이 끝났어요. 다음 세트!','Rest over. Next set!','انتهت الاستراحة. المجموعة التالية!'],['시간을 다 채웠어요!','Time\'s up, well done!','انتهى الوقت، أحسنت!'],
+ ['저장했어요. 이번 주 운동이 하나 늘었어요.','Saved. One more workout this week.','تم الحفظ. تمرين إضافي هذا الأسبوع.'],['오늘 기록 하나로 합쳤어요.','Merged into today\'s record.','دُمج في سجل اليوم.'],
+ ['운동할 날을 저장했어요.','Workout days saved.','حُفظت أيام التمرين.'],
+ ['바쁜 날로 표시했어요. 이번 주 운동 목표에 쉬운 선택지가 보여요.','Marked as busy. Easy options now show in This week\'s goal.','عُلّم يومًا مزدحمًا. تظهر الآن خيارات سهلة في «هدف هذا الأسبوع».'],
+ ['이번 주는 쉬어도 괜찮아요. 남은 날에 다시 알려 드릴게요.','It\'s fine to rest this week. We\'ll remind you on the remaining days.','لا بأس بالراحة هذا الأسبوع. سنذكّرك في الأيام المتبقية.'],
+ ['가벼운 안으로 바꿨어요.','Switched to a lighter plan.','انتقلنا إلى خطة أخف.'],['요일 줄에서 옮길 날을 골라 주세요.','Pick the day to move in the week row.','اختر اليوم المراد نقله في صف الأسبوع.'],
+ ['지난번 운동으로 준비했어요.','Your last workout is ready.','آخر تمرين جاهز.'],['새 알림이 없어요.','No new notifications.','لا إشعارات جديدة.'],
+ ['저장하지 못했어요. 입력한 내용은 그대로예요.','Couldn\'t save. Your entries are kept.','تعذّر الحفظ. ما أدخلته محفوظ.'],['다시 시도하는 중이에요… (미리 보기)','Retrying… (preview)','نعيد المحاولة… (معاينة)'],
+ ['목표 체중을 저장했어요. (미리 보기)','Target weight saved. (preview)','حُفظ الوزن المستهدف. (معاينة)'],
+ ['이번 주 목표를 채웠어요. 오늘은 원하면 가볍게!','Weekly goal reached. Go light today if you like!','اكتمل هدف الأسبوع. تمرّن بخفة اليوم إن شئت!'],
+ ['찾는 기구가 없어요. 어디 운동(하체 · 상체 · 전신)으로 찾아볼까요?','No machine found. Try searching by body part (lower · upper · full)?','لم يُعثر على جهاز. جرّب البحث بالجزء (سفلي · علوي · كامل)؟'],
+ ['이 장소에서 한 운동은 아직 없어요.','No workouts here yet.','لا تمارين هنا بعد.'],['아직 이번 주 기록이 없어요.','No workouts yet this week.','لا تمارين هذا الأسبوع بعد.'],
+ ['쉬운 운동을 제안해요','We\'ll suggest easy workouts','سنقترح تمارين سهلة'],['위치 정보 없음(예시)','no location info (sample)','لا معلومات عن المكان (مثال)'],
+ ['한국어로 바꿨어요','Switched to Korean','تم التبديل إلى الكورية'],
+ ['오늘 할 운동 시작','Start today\'s workout','ابدأ تمرين اليوم'],['다 했어요, 다음 동작','Done, next move','تم، الحركة التالية'],['다 했어요, 저장하기','Done, save','تم، احفظ'],
+ ['이번 주 운동 목표','This week\'s goal','هدف هذا الأسبوع'],['이번 주 운동 기록','This week\'s workouts','تمارين هذا الأسبوع'],['운동할 날 바꾸기','Change workout days','غيّر أيام التمرين'],
+ ['바쁜 날이 있는 주예요','This is a busy week','هذا أسبوع مزدحم'],['이번 주는 지금까지 2회','2 so far this week','2 حتى الآن هذا الأسبوع'],['이번 주는 쉴게요','Skip this week','سأرتاح هذا الأسبوع'],
+ ['집에서 10분','10 min at home','10 دقائق في المنزل'],['퇴근길 걷기','Walk home','المشي إلى المنزل'],['운동 횟수에는 세지 않아요','Not counted as workouts','لا تُحسب ضمن التمارين'],
+ ['운동 횟수 흐름','Workout trend','اتجاه التمارين'],['아침 빈속 체중 흐름','Morning fasted weight','وزن الصباح على معدة فارغة'],['아침 빈속 흐름','Morning fasted trend','منحنى الصباح على معدة فارغة'],
+ ['최근 4주 3 · 0 · 3 · 2회','Last 4 weeks: 3 · 0 · 3 · 2','آخر 4 أسابيع: 3 · 0 · 3 · 2'],['4주 동안 -0.7kg','-0.7kg over 4 weeks','-0.7kg خلال 4 أسابيع'],
+ ['건강 상태 리뷰','Health review','مراجعة الصحة'],['어디서 할까요?','Where today?','أين اليوم؟'],['사용법 영상','How-to video','فيديو الشرح'],
+ ['누르면 재생 · 자동 재생 안 함','Tap to play · no autoplay','اضغط للتشغيل · بلا تشغيل تلقائي'],['기구가 어디 있나요?','Where\'s the machine?','أين الجهاز؟'],
+ ['기구 이름 검색 (예: 레그 프레스)','Search machines (e.g. Leg press)','ابحث عن جهاز (مثل: ضغط الأرجل)'],['운동 1회 저장','Save workout','حفظ التمرين'],
+ ['어디서 했나요?','Where did you work out?','أين تمرّنت؟'],['운동한 시간','Workout time','مدة التمرين'],['(필수)','(required)','(مطلوب)'],['업데이트 중…','Updating…','جارٍ التحديث…'],
+ ['전체 보기','See all','عرض الكل'],['일상 걸음','Daily steps','الخطوات اليومية'],['운동할 날','Workout days','أيام التمرين'],['주 몇 번','Times per week','كم مرة في الأسبوع'],
+ ['잰 때: 아침 빈속','Measured: morning fasted','وقت القياس: صباحًا على معدة فارغة'],['지난번보다','vs last time','مقارنة بالمرة الماضية'],['바쁜 날 표시하기','Mark a busy day','علّم يومًا مزدحمًا'],
+ ['다가오는 바쁜 날','Upcoming busy days','الأيام المزدحمة القادمة'],['지난 바쁜 날','Past busy days','الأيام المزدحمة السابقة'],['표시하기','Mark','علّم'],
+ ['목표 체중','Target weight','الوزن المستهدف'],['선호 운동 장소','Preferred place','المكان المفضّل'],['내 정보','My info','معلوماتي'],['상태 미리 보기','State preview','معاينة الحالات'],
+ ['모바일 보기','Mobile view','عرض الجوال'],['데스크톱 보기','Desktop view','عرض سطح المكتب'],['⚙ 보기 · 상태','⚙ View · State','⚙ العرض · الحالة'],
+ ['AI 추천 · 예시','AI suggestion · sample','اقتراح الذكاء الاصطناعي · مثال'],['근거 자세히','Show evidence','اعرض الأدلة'],['다른 안 보기','See another option','اعرض خيارًا آخر'],
+ ['처음 안 보기','Back to first option','العودة إلى الخيار الأول'],['순서대로','In order','بالترتيب'],['할 수 있어요','You can do it','تستطيع ذلك'],['목표 달성','Goal met','تحقّق الهدف'],
+ ['목표를 채웠어요','Goal reached','اكتمل الهدف'],['쉬는 시간','Rest','استراحة'],['건너뛰기','Skip','تخطَّ'],['잠깐 멈춤','Pause','إيقاف مؤقت'],['이어서','Resume','استئناف'],
+ ['한 날','Done','تم'],['할 날','Planned','مخطط'],['옮기기','Move','انقل'],['요일 줄','Week','الأسبوع'],['오늘 할 운동','Today\'s workout','تمرين اليوم'],['바쁜 날','Busy days','الأيام المزدحمة'],
+ ['레그 프레스 머신','Leg press machine','جهاز ضغط الأرجل'],['랫 풀다운 머신','Lat pulldown machine','جهاز السحب العلوي'],['레그 프레스','Leg press','ضغط الأرجل'],['랫 풀다운','Lat pulldown','السحب العلوي'],
+ ['러닝머신 걷기','Treadmill walk','المشي على جهاز المشي'],['러닝머신','Treadmill','جهاز المشي'],['유튜브 하체 홈트','YouTube lower-body workout','تمرين يوتيوب للجزء السفلي'],
+ ['전신 스트레칭','Full-body stretch','تمدّد الجسم كاملًا'],['따라 하기 영상','Follow-along video','فيديو للمتابعة'],['퇴근길 한 정거장 먼저 내려 걷기','Walk home, one stop early','المشي إلى المنزل قبل محطة'],
+ ['공원 산책','Park walk','نزهة في الحديقة'],['덤벨','Dumbbell','دمبل'],['하체','Lower body','الجزء السفلي'],['상체','Upper body','الجزء العلوي'],['전신','Full body','الجسم كاملًا'],['걷기','Walking','المشي'],
+ ['아침 빈속','Morning, fasted','صباحًا على معدة فارغة'],['저녁 (흐름에서 따로 표시)','Evening (shown separately)','مساءً (يُعرض منفصلًا)'],['저녁','Evening','مساءً'],
+ ['전날 회식','dinner out the night before','عشاء عمل في الليلة السابقة'],['헬스장','Gym','النادي'],['밖에서','Outdoors','في الخارج'],['회식','Team dinner','عشاء عمل'],
+ ['야근','Overtime','عمل إضافي'],['약속','Plans','موعد'],['체중','Weight','الوزن'],
+];
+const D=(l,w)=>DOWS[l][w];
+const REGEX=[
+ [/(\d+)\/(\d+)번째 동작/g,'Move $1 of $2','الحركة $1 من $2'],
+ [/(\d+)번 남았어요 · 오늘 하면 채워요/g,'$1 more to go · today would do it','بقي $1 · اليوم يكتمل'],
+ [/이번 주 목표까지 /g,'This week: ','هذا الأسبوع: '],
+ [/(\d+)번 남았어요/g,'$1 to go','بقي $1'],
+ [/주 (\d+)회 중 (\d+)회 했어요/g,'$2 of $1 done this week','$2 من $1 هذا الأسبوع'],
+ [/오늘 할 동작 (\d+)개/g,'Today\'s moves ($1)','حركات اليوم ($1)'],
+ [/(\d+)회 × (\d+)세트/g,'$1 reps × $2 sets','$1 تكرار × $2 مجموعات'],
+ [/(\d+)세트/g,'Set $1','مجموعة $1'],[/(\d+)회$/g,'$1 reps','$1 تكرار'],
+ [/(\d+)~(\d+)분/g,'$1–$2 min','$1–$2 دقيقة'],[/(\d+)분 타이머/g,'$1-min timer','مؤقّت $1 دقيقة'],[/(\d+)분/g,'$1 min','$1 دقيقة'],
+ [/(\d+\/\d+) \((월|화|수|목|금|토|일)\)/g,l=>(m,d,w)=>`${D(l,w)} ${d}`],
+ [/(월|화|수|목|금|토|일)로 옮김/g,l=>(m,w)=>l==='en'?`Moved to ${D(l,w)}`:`نُقل إلى ${D(l,w)}`],
+ [/(월|화|수|목|금|토|일)요일 운동을 다른 날로 옮길까요\?/g,l=>(m,w)=>l==='en'?`Move ${D(l,w)}'s workout to another day?`:`هل تنقل تمرين ${D(l,w)} إلى يوم آخر؟`],
+ [/(월|화|수|목|금|토|일)요일 운동을 (월|화|수|목|금|토|일)요일로 옮겼어요\./g,l=>(m,a,b)=>l==='en'?`Moved ${D(l,a)}'s workout to ${D(l,b)}.`:`نُقل تمرين ${D(l,a)} إلى ${D(l,b)}.`],
+ [/(월|화|수|목|금|토|일)요일 \(/g,l=>(m,w)=>`${D(l,w)} (`],
+ [/운동한 시간이 (\d+)분이 맞나요\?/g,'Is $1 minutes right?','هل $1 دقيقة صحيحة؟'],
+ [/오늘 (\S+) 운동이 이미 1회 있어요/g,'You already have one $1 workout today','لديك تمرين واحد في $1 اليوم بالفعل'],
+ [/^(\d)번$/g,'$1x','$1 مرات'],[/^(\d)주$/g,'W$1','أ$1'],[/(\d[\d,]*)보/g,'$1 steps','$1 خطوة'],[/(^|· )집( ·|$)/g,'$1Home$2','$1المنزل$2'],
+ [/상태 미리 보기: /g,'State preview: ','معاينة الحالات: '],[/체중 · /g,'Weight · ','الوزن · '],[/ · 위치/g,' · location',' · الموقع'],
+];
+function tr(s,l){
+  if(!s||!/[가-힣]/.test(s)) return s;
+  const i=l==='en'?0:1, t=s.trim();
+  if(EXACT[t]) return s.replace(t,EXACT[t][i]);
+  let o=s; for(const p of PHRASES){ if(o.includes(p[0])) o=o.split(p[0]).join(p[i+1]); }
+  for(const r of REGEX){ const v=r[1] instanceof Function? r[1](l) : r[i+1]; o=o.replace(r[0],v); }
+  return o;
+}
+let busyTr=false;
+function trNode(get,set,store){ // store: object holding __ko/__tr/__lang
+  const v=get();
+  if(lang==='ko'){ if(store.__tr!==undefined && store.__tr===v){ set(store.__ko); store.__tr=undefined; } return; }
+  if(store.__tr!==undefined && store.__tr===v){ if(store.__lang!==lang){ const t=tr(store.__ko,lang); store.__tr=t; store.__lang=lang; set(t); } return; }
+  if(/[가-힣]/.test(v)){ const t=tr(v,lang); if(t!==v){ store.__ko=v; store.__tr=t; store.__lang=lang; set(t); } }
+}
+function translateAll(){
+  if(busyTr) return; busyTr=true;
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>/^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  let n; while((n=w.nextNode())){ const node=n; trNode(()=>node.nodeValue,v=>node.nodeValue=v,node); }
+  document.querySelectorAll('[placeholder],[aria-label],input[readonly]').forEach(el=>{
+    ['placeholder','aria-label'].forEach(a=>{ if(!el.hasAttribute(a)) return; el['__st'+a]=el['__st'+a]||{}; trNode(()=>el.getAttribute(a),v=>el.setAttribute(a,v),el['__st'+a]); });
+    if(el.matches('input[readonly]')){ el.__stv=el.__stv||{}; trNode(()=>el.value,v=>el.value=v,el.__stv); }
+  });
+  busyTr=false;
+}
+new MutationObserver(()=>{ if(lang!=='ko' && !busyTr) queueMicrotask(translateAll) }).observe(document.body,{childList:true,subtree:true,characterData:true});
+function toggleLangMenu(){ const m=document.getElementById('langmenu'); m.hidden=!m.hidden; }
+function toggleLang(){ setLang(lang==='ko'?'en':lang==='en'?'ar':'ko') }
+function setLang(l){
+  lang=l; document.documentElement.lang=l; document.documentElement.dir= l==='ar'?'rtl':'ltr';
+  document.getElementById('langbtn').textContent='🌐 '+LANGS[l]+' ▾';
+  document.querySelectorAll('#langmenu button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===l));
+  document.getElementById('langmenu').hidden=true;
+  renderThemeChips(); translateAll(); toast(l==='en'?'Switched to English':l==='ar'?'تم التبديل إلى العربية':'한국어로 바꿨어요');
+}
+const THEMES=[['quiet-notebook','조용한 노트'],['fresh-green','산뜻한 초록'],['warm-wellness','따뜻한 웰니스']];
+function renderThemeChips(){ if(!document.getElementById('theme-chips')) return; const cur=window.THEME_ID||(document.title.match(/\(([a-z-]+)\)/)||[])[1]; document.getElementById('theme-chips').innerHTML=THEMES.map(([k,v])=>`<a class="chip" href="prototype-first-${k}.html${lang==='ko'?'':'#'+lang}" aria-pressed="${k===cur}" style="text-decoration:none">${v}</a>`).join('') }
+document.addEventListener('click',e=>{ const m=document.getElementById('langmenu'); if(!m.hidden && !e.target.closest('.langwrap')) m.hidden=true; });
+go('home');
+renderThemeChips();
+if(location.hash==='#en'||location.hash==='#ar') setLang(location.hash.slice(1));
+</script>
+</body>
+</html>
