@@ -150,8 +150,9 @@ function openLangPop(){
   p.classList.add('open');
   const fr = frame.getBoundingClientRect(), w = p.offsetWidth || 160;
   if (lastRect) {
+    // 지구 아이콘 바로 아래: 왼쪽 끝을 버튼 왼쪽 끝에 맞춘다 (아랍어는 오른쪽 끝끼리)
     const rtl = lang === 'ar';
-    let left = fr.left + (rtl ? lastRect.left : lastRect.right - w);
+    let left = fr.left + (rtl ? lastRect.right - w : lastRect.left);
     left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
     p.style.left = left + 'px'; p.style.right = 'auto'; p.style.top = (fr.top + lastRect.bottom + 6) + 'px';
   }
